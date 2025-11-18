@@ -1,128 +1,880 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Protección + Simulador</title>
-
-<style>
-    body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-    }
-
-    #protector {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-        background: black;
-        color: white;
-        text-align: center;
-        padding-top: 50px;
-        z-index: 99999;
-    }
-
-    #protector h1 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-    }
-
-    iframe {
-        border: none;
-        width: 80%;
-        height: 400px;
-        pointer-events: none;
-    }
-
-    #realPage {
-        display: none;
-    }
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Caída Libre</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input[type="range"], input[type="number"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="number"] {
+            height: 40px;
+            padding: 0 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fdbb2d;
+            cursor: pointer;
+        }
+        
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        
+        .unit-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .unit-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .unit-btn.active {
+            background: #fdbb2d;
+            color: #1a2a6c;
+            border-color: #fdbb2d;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #fdbb2d;
+            color: #1a2a6c;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: #ffcc44;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .simulation {
+            flex: 2;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .animation-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        #animationCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .data-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .data-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .data-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #fdbb2d;
+        }
+        
+        .data-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .graph-container {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+        
+        #graphCanvas {
+            width: 100%;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: block;
+        }
+        
+        .info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info h2 {
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .formulas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .formula {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .formula h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .formula p {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>Simulador de Caída Libre</h1>
+            <p class="subtitle">Explora la física del movimiento bajo la influencia de la gravedad</p>
+        </header>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="height">Altura inicial</label>
+                    <input type="number" id="heightInput" min="1" max="1000" value="100">
+                    <div class="unit-selector">
+                        <div class="unit-btn active" data-unit="m">Metros (m)</div>
+                        <div class="unit-btn" data-unit="ft">Pies (ft)</div>
+                        <div class="unit-btn" data-unit="cm">Centímetros (cm)</div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="gravity">Gravedad (m/s²)</label>
+                    <input type="range" id="gravity" min="1" max="20" value="9.8" step="0.1">
+                    <div class="value-display">
+                        <span>1 m/s²</span>
+                        <span id="gravityValue">9.8 m/s²</span>
+                        <span>20 m/s²</span>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="startBtn">Iniciar</button>
+                    <button id="pauseBtn" disabled>Pausar</button>
+                    <button id="resetBtn">Reiniciar</button>
+                </div>
+            </div>
+            
+            <div class="simulation">
+                <div class="animation-container">
+                    <canvas id="animationCanvas"></canvas>
+                </div>
+                
+                <div class="data-panel">
+                    <div class="data-card">
+                        <div class="data-label">Tiempo</div>
+                        <div class="data-value" id="timeValue">0.00 s</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Altura</div>
+                        <div class="data-value" id="heightDisplay">100.00 m</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Velocidad</div>
+                        <div class="data-value" id="velocityValue">0.00 m/s</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Tiempo total</div>
+                        <div class="data-value" id="totalTime">4.52 s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="graph-container">
+            <h2>Gráfico: Posición vs Tiempo</h2>
+            <canvas id="graphCanvas"></canvas>
+        </div>
+        
+        <div class="info">
+            <h2>Física de la Caída Libre</h2>
+            <p>En la caída libre, un objeto se mueve bajo la influencia exclusiva de la gravedad, despreciando la resistencia del aire. Las ecuaciones que rigen este movimiento son:</p>
+            
+            <div class="formulas">
+                <div class="formula">
+                    <h3>Posición</h3>
+                    <p>y = h₀ - ½gt²</p>
+                    <p>Donde:<br>
+                    y = altura actual<br>
+                    h₀ = altura inicial<br>
+                    g = aceleración gravitatoria<br>
+                    t = tiempo transcurrido</p>
+                </div>
+                
+                <div class="formula">
+                    <h3>Velocidad</h3>
+                    <p>v = gt</p>
+                    <p>Donde:<br>
+                    v = velocidad<br>
+                    g = aceleración gravitatoria<br>
+                    t = tiempo transcurrido</p>
+                </div>
+                
+                <div class="formula">
+                    <h3>Tiempo de caída</h3>
+                    <p>t = √(2h₀/g)</p>
+                    <p>Donde:<br>
+                    t = tiempo total de caída<br>
+                    h₀ = altura inicial<br>
+                    g = aceleración gravitatoria</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- ======================= -->
-<!-- PROTECTOR ANTI-COPIA    -->
-<!-- ======================= -->
-<div id="protector">
-    <h1>Página hecha por sh6ta_thecat</h1>
-    <p>Este código ha sido copiado desde una ubicación no autorizada.</p>
-    <br>
-
-    <iframe id="ytplayer"
-        src="https://www.youtube.com/embed/5ui8UM_0aeo?controls=0&start=96&autoplay=1&mute=1&enablejsapi=1&modestbranding=1&rel=0"
-        allow="autoplay"
-        allowfullscreen>
-    </iframe>
-
-    <p style="margin-top:20px; font-size: 1.2rem;">Cargando…</p>
-</div>
-
-<!-- ======================= -->
-<!-- PÁGINA REAL COMBINADA   -->
-<!-- ======================= -->
-<div id="realPage">
-
-<embed src="https://sh6ta-thecat.github.io/caida-libre/d.html"
-       style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none;">
-
-</div>
-
-<!-- ======================= -->
-<!-- SCRIPT DEL PROTECTOR    -->
-<!-- ======================= -->
-<script>
-(function() {
-    const host = window.location.hostname;
-    const path = window.location.pathname;
-
-    const esLocalhost =
-        (host === "localhost" || host === "127.0.0.1") &&
-        (path === "/gato" || path === "/gato/");
-
-    if (esLocalhost) {
-        document.getElementById("realPage").style.display = "block";
-    } else {
-        document.getElementById("protector").style.display = "block";
-    }
-})();
-</script>
-
-<script>
-window.addEventListener("load", () => {
-    const iframe = document.getElementById("ytplayer");
-
-    setTimeout(() => {
-        iframe.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "unMute", args: [] }),
-            "*"
-        );
-    }, 800);
-
-    const playFix = setInterval(() => {
-        iframe.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-            "*"
-        );
-    }, 500);
-
-    setTimeout(() => {
-        iframe.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "stopVideo", args: [] }),
-            "*"
-        );
-
-        iframe.remove();
-        clearInterval(playFix);
-
-        document.getElementById("protector").style.display = "none";
-        document.getElementById("realPage").style.display = "block";
-
-    }, 40000);
-});
-</script>
-
+    <script>
+        // =============================================
+        // CONFIGURACIÓN INICIAL Y DECLARACIÓN DE VARIABLES
+        // =============================================
+        
+        // Obtener referencias a elementos del DOM (Document Object Model)
+        const heightInput = document.getElementById('heightInput');
+        const gravitySlider = document.getElementById('gravity');
+        const gravityValue = document.getElementById('gravityValue');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const unitBtns = document.querySelectorAll('.unit-btn');
+        
+        const timeValue = document.getElementById('timeValue');
+        const heightDisplay = document.getElementById('heightDisplay');
+        const velocityValue = document.getElementById('velocityValue');
+        const totalTime = document.getElementById('totalTime');
+        
+        const animationCanvas = document.getElementById('animationCanvas');
+        const graphCanvas = document.getElementById('graphCanvas');
+        
+        // Obtener contextos de dibujo para los canvas
+        const animationCtx = animationCanvas.getContext('2d');
+        const graphCtx = graphCanvas.getContext('2d');
+        
+        // Variables de estado de la simulación
+        let initialHeight = 100; // Altura inicial en metros
+        let heightUnit = 'm'; // Unidad de medida por defecto
+        let gravity = 9.8; // Aceleración gravitatoria en m/s²
+        let time = 0; // Tiempo transcurrido en segundos
+        let isRunning = false; // Estado de la simulación (corriendo/pausada)
+        let animationId; // ID para controlar la animación
+        
+        // Factores de conversión entre unidades de longitud
+        const unitFactors = {
+            'm': 1,        // Metro (unidad base)
+            'ft': 3.28084, // 1 metro = 3.28084 pies
+            'cm': 100      // 1 metro = 100 centímetros
+        };
+        
+        // Estructura para almacenar datos del gráfico
+        const graphData = {
+            times: [],   // Array para almacenar tiempos
+            heights: []  // Array para almacenar alturas correspondientes
+        };
+        
+        // =============================================
+        // FUNCIONES MATEMÁTICAS Y CÁLCULOS
+        // =============================================
+        
+        /**
+         * Calcula el tiempo total de caída usando la fórmula física
+         * t = √(2h/g) donde h es altura y g es gravedad
+         * @returns {number} Tiempo total en segundos
+         */
+        function calculateTotalTime() {
+            return Math.sqrt(2 * initialHeight / gravity);
+        }
+        
+        /**
+         * Actualiza la visualización del tiempo total de caída
+         */
+        function updateTotalTime() {
+            const total = calculateTotalTime();
+            totalTime.textContent = total.toFixed(2) + ' s';
+        }
+        
+        // =============================================
+        // CONFIGURACIÓN Y MANEJO DE CANVAS
+        // =============================================
+        
+        /**
+         * Configura los canvas con las dimensiones correctas
+         * y dibuja el estado inicial
+         */
+        function setupCanvases() {
+            // Configurar canvas de animación con las dimensiones del contenedor
+            animationCanvas.width = animationCanvas.offsetWidth;
+            animationCanvas.height = animationCanvas.offsetHeight;
+            
+            // Configurar canvas del gráfico
+            graphCanvas.width = graphCanvas.offsetWidth;
+            graphCanvas.height = graphCanvas.offsetHeight;
+            
+            // Dibujar estado inicial en ambos canvas
+            drawAnimation();
+            drawGraph();
+        }
+        
+        // =============================================
+        // MANEJO DE INTERFAZ DE USUARIO
+        // =============================================
+        
+        /**
+         * Configura los botones de selección de unidades
+         * Permite cambiar entre metros, pies y centímetros
+         */
+        unitBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remover clase active de todos los botones
+                unitBtns.forEach(b => b.classList.remove('active'));
+                // Agregar clase active al botón clickeado
+                this.classList.add('active');
+                
+                // Actualizar unidad seleccionada
+                heightUnit = this.getAttribute('data-unit');
+                updateHeightDisplay();
+            });
+        });
+        
+        /**
+         * Actualiza la visualización de la altura según la unidad seleccionada
+         */
+        function updateHeightDisplay() {
+            // Convertir altura a la unidad seleccionada
+            const convertedHeight = initialHeight * unitFactors[heightUnit];
+            // Actualizar input y display
+            heightInput.value = convertedHeight.toFixed(2);
+            heightDisplay.textContent = convertedHeight.toFixed(2) + ' ' + heightUnit;
+            updateTotalTime();
+        }
+        
+        // =============================================
+        // MANEJADORES DE EVENTOS DE CONTROLES
+        // =============================================
+        
+        /**
+         * Maneja cambios en el input de altura
+         */
+        heightInput.addEventListener('input', function() {
+            // Convertir valor ingresado a metros (unidad base para cálculos)
+            initialHeight = parseFloat(this.value) / unitFactors[heightUnit];
+            // Reiniciar simulación si no está corriendo
+            if (!isRunning) {
+                resetSimulation();
+            }
+            updateTotalTime();
+        });
+        
+        /**
+         * Maneja cambios en el slider de gravedad
+         */
+        gravitySlider.addEventListener('input', function() {
+            // Actualizar valor de gravedad
+            gravity = parseFloat(this.value);
+            // Actualizar display
+            gravityValue.textContent = gravity.toFixed(1) + ' m/s²';
+            // Reiniciar simulación si no está corriendo
+            if (!isRunning) {
+                resetSimulation();
+            }
+            updateTotalTime();
+        });
+        
+        // =============================================
+        // CONTROL DE SIMULACIÓN (INICIAR/PAUSAR/REINICIAR)
+        // =============================================
+        
+        // Asignar manejadores de eventos a los botones
+        startBtn.addEventListener('click', startSimulation);
+        pauseBtn.addEventListener('click', pauseSimulation);
+        resetBtn.addEventListener('click', resetSimulation);
+        
+        /**
+         * Inicia la simulación de caída libre
+         */
+        function startSimulation() {
+            // Si ya está corriendo, salir
+            if (isRunning) return;
+            
+            // Actualizar estado
+            isRunning = true;
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            // Calcular tiempo de inicio considerando el tiempo ya transcurrido
+            const startTime = performance.now() - time * 1000;
+            
+            /**
+             * Función de animación que se ejecuta en cada frame
+             * @param {number} currentTime - Tiempo actual en milisegundos
+             */
+            function animate(currentTime) {
+                // Si la simulación fue pausada, salir
+                if (!isRunning) return;
+                
+                // Calcular tiempo transcurrido en segundos
+                time = (currentTime - startTime) / 1000;
+                
+                // =============================================
+                // CÁLCULOS FÍSICOS EN TIEMPO REAL
+                // =============================================
+                
+                // Calcular altura actual usando ecuación de movimiento: y = h₀ - ½gt²
+                const currentHeight = Math.max(0, initialHeight - 0.5 * gravity * time * time);
+                // Calcular velocidad actual: v = gt
+                const velocity = gravity * time;
+                
+                // =============================================
+                // ACTUALIZACIÓN DE INTERFAZ
+                // =============================================
+                
+                // Actualizar displays
+                timeValue.textContent = time.toFixed(2) + ' s';
+                
+                // Mostrar altura en la unidad seleccionada
+                const displayHeight = currentHeight * unitFactors[heightUnit];
+                heightDisplay.textContent = displayHeight.toFixed(2) + ' ' + heightUnit;
+                
+                velocityValue.textContent = velocity.toFixed(2) + ' m/s';
+                
+                // Almacenar datos para el gráfico
+                graphData.times.push(time);
+                graphData.heights.push(currentHeight);
+                
+                // Actualizar visualizaciones
+                drawAnimation(currentHeight);
+                drawGraph();
+                
+                // Verificar si el objeto llegó al suelo
+                if (currentHeight <= 0) {
+                    pauseSimulation();
+                    return;
+                }
+                
+                // Solicitar siguiente frame de animación
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            // Iniciar loop de animación
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        /**
+         * Pausa la simulación
+         */
+        function pauseSimulation() {
+            isRunning = false;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            // Cancelar animación
+            cancelAnimationFrame(animationId);
+        }
+        
+        /**
+         * Reinicia la simulación a su estado inicial
+         */
+        function resetSimulation() {
+            // Pausar primero
+            pauseSimulation();
+            // Reiniciar variables
+            time = 0;
+            graphData.times = [];
+            graphData.heights = [];
+            
+            // Actualizar displays
+            timeValue.textContent = '0.00 s';
+            const displayHeight = initialHeight * unitFactors[heightUnit];
+            heightDisplay.textContent = displayHeight.toFixed(2) + ' ' + heightUnit;
+            velocityValue.textContent = '0.00 m/s';
+            
+            // Redibujar
+            drawAnimation();
+            drawGraph();
+        }
+        
+        // =============================================
+        // FUNCIONES DE DIBUJO Y VISUALIZACIÓN
+        // =============================================
+        
+        /**
+         * Dibuja la animación del objeto cayendo
+         * @param {number} currentHeight - Altura actual del objeto
+         */
+        function drawAnimation(currentHeight = initialHeight) {
+            const width = animationCanvas.width;
+            const height = animationCanvas.height;
+            
+            // Limpiar canvas
+            animationCtx.clearRect(0, 0, width, height);
+            
+            // Dibujar fondo azul
+            animationCtx.fillStyle = 'rgba(26, 42, 108, 0.7)';
+            animationCtx.fillRect(0, 0, width, height);
+            
+            // Dibujar suelo (marrón)
+            animationCtx.fillStyle = '#8B4513';
+            animationCtx.fillRect(0, height - 50, width, 50);
+            
+            // Dibujar césped (verde)
+            animationCtx.fillStyle = '#2E8B57';
+            animationCtx.fillRect(0, height - 50, width, 10);
+            
+            // Calcular escala para convertir metros a píxeles
+            const maxHeight = initialHeight;
+            const scale = (height - 100) / maxHeight;
+            // Calcular posición Y del objeto
+            const objectY = height - 50 - (currentHeight * scale);
+            
+            // Tamaño fijo del objeto
+            const objectSize = 30;
+            
+            // Dibujar objeto (círculo amarillo)
+            animationCtx.fillStyle = '#fdbb2d';
+            animationCtx.beginPath();
+            animationCtx.arc(width / 2, objectY, objectSize / 2, 0, Math.PI * 2);
+            animationCtx.fill();
+            
+            // Dibujar sombra del objeto
+            animationCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            animationCtx.beginPath();
+            animationCtx.ellipse(width / 2, height - 45, objectSize / 2, objectSize / 6, 0, 0, Math.PI * 2);
+            animationCtx.fill();
+            
+            // Dibujar escala de altura (líneas punteadas)
+            animationCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            animationCtx.lineWidth = 1;
+            animationCtx.setLineDash([5, 5]);
+            
+            for (let i = 0; i <= maxHeight; i += 20) {
+                const y = height - 50 - (i * scale);
+                animationCtx.beginPath();
+                animationCtx.moveTo(50, y);
+                animationCtx.lineTo(width - 50, y);
+                animationCtx.stroke();
+                
+                // Etiquetas de la escala
+                animationCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                animationCtx.font = '12px Arial';
+                animationCtx.fillText(i + ' m', 10, y + 4);
+            }
+            
+            animationCtx.setLineDash([]);
+            
+            // Mostrar información adicional
+            animationCtx.fillStyle = 'white';
+            animationCtx.font = '14px Arial';
+            animationCtx.fillText(`Gravedad: ${gravity.toFixed(1)} m/s²`, 10, 20);
+            animationCtx.fillText(`Tiempo total: ${calculateTotalTime().toFixed(2)} s`, 10, 40);
+        }
+        
+        /**
+         * Dibuja el gráfico de posición vs tiempo
+         */
+        function drawGraph() {
+            const width = graphCanvas.width;
+            const height = graphCanvas.height;
+            const padding = 40; // Espacio para ejes y etiquetas
+            
+            // Limpiar canvas
+            graphCtx.clearRect(0, 0, width, height);
+            
+            // Dibujar fondo del gráfico
+            graphCtx.fillStyle = 'rgba(26, 42, 108, 0.3)';
+            graphCtx.fillRect(0, 0, width, height);
+            
+            // Calcular escalas para ajustar datos al tamaño del canvas
+            const maxTime = Math.max(1, ...graphData.times, calculateTotalTime());
+            const maxHeight = initialHeight;
+            
+            const xScale = (width - 2 * padding) / maxTime;
+            const yScale = (height - 2 * padding) / maxHeight;
+            
+            // Dibujar ejes coordenados
+            graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            graphCtx.lineWidth = 2;
+            
+            // Eje Y (altura)
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, padding);
+            graphCtx.lineTo(padding, height - padding);
+            graphCtx.stroke();
+            
+            // Eje X (tiempo)
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, height - padding);
+            graphCtx.lineTo(width - padding, height - padding);
+            graphCtx.stroke();
+            
+            // Etiquetas de ejes
+            graphCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            graphCtx.font = '14px Arial';
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText('Tiempo (s)', width / 2, height - 10);
+            
+            // Rotar texto del eje Y
+            graphCtx.save();
+            graphCtx.translate(10, height / 2);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Altura (m)', 0, 0);
+            graphCtx.restore();
+            
+            // Marcas y valores en el eje Y
+            graphCtx.textAlign = 'right';
+            graphCtx.textBaseline = 'middle';
+            
+            for (let i = 0; i <= maxHeight; i += maxHeight / 5) {
+                const y = height - padding - (i * yScale);
+                graphCtx.beginPath();
+                graphCtx.moveTo(padding - 5, y);
+                graphCtx.lineTo(padding, y);
+                graphCtx.stroke();
+                
+                graphCtx.fillText(i.toString(), padding - 10, y);
+            }
+            
+            // Marcas y valores en el eje X
+            graphCtx.textAlign = 'center';
+            graphCtx.textBaseline = 'top';
+            
+            for (let i = 0; i <= maxTime; i += maxTime / 5) {
+                const x = padding + (i * xScale);
+                graphCtx.beginPath();
+                graphCtx.moveTo(x, height - padding);
+                graphCtx.lineTo(x, height - padding + 5);
+                graphCtx.stroke();
+                
+                graphCtx.fillText(i.toFixed(1), x, height - padding + 10);
+            }
+            
+            // Dibujar curva de datos reales (amarilla)
+            if (graphData.times.length > 0) {
+                graphCtx.strokeStyle = '#fdbb2d';
+                graphCtx.lineWidth = 3;
+                graphCtx.beginPath();
+                
+                for (let i = 0; i < graphData.times.length; i++) {
+                    const x = padding + graphData.times[i] * xScale;
+                    const y = height - padding - graphData.heights[i] * yScale;
+                    
+                    if (i === 0) {
+                        graphCtx.moveTo(x, y);
+                    } else {
+                        graphCtx.lineTo(x, y);
+                    }
+                }
+                
+                graphCtx.stroke();
+                
+                // Dibujar punto en la posición actual
+                if (graphData.times.length > 0) {
+                    const lastIndex = graphData.times.length - 1;
+                    const x = padding + graphData.times[lastIndex] * xScale;
+                    const y = height - padding - graphData.heights[lastIndex] * yScale;
+                    
+                    graphCtx.fillStyle = '#fdbb2d';
+                    graphCtx.beginPath();
+                    graphCtx.arc(x, y, 5, 0, Math.PI * 2);
+                    graphCtx.fill();
+                }
+            }
+            
+            // Dibujar curva teórica (línea punteada blanca)
+            graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            graphCtx.lineWidth = 1;
+            graphCtx.setLineDash([5, 5]);
+            graphCtx.beginPath();
+            
+            for (let t = 0; t <= maxTime; t += 0.1) {
+                const h = Math.max(0, initialHeight - 0.5 * gravity * t * t);
+                const x = padding + t * xScale;
+                const y = height - padding - h * yScale;
+                
+                if (t === 0) {
+                    graphCtx.moveTo(x, y);
+                } else {
+                    graphCtx.lineTo(x, y);
+                }
+            }
+            
+            graphCtx.stroke();
+            graphCtx.setLineDash([]);
+        }
+        
+        // =============================================
+        // INICIALIZACIÓN Y CONFIGURACIÓN DE EVENTOS
+        // =============================================
+        
+        /**
+         * Función de inicialización que se ejecuta al cargar la página
+         */
+        window.addEventListener('load', function() {
+            setupCanvases();
+            gravityValue.textContent = gravity.toFixed(1) + ' m/s²';
+            updateHeightDisplay();
+        });
+        
+        /**
+         * Reconfigurar canvas cuando cambia el tamaño de la ventana
+         */
+        window.addEventListener('resize', function() {
+            setupCanvases();
+        });
+    </script>
 </body>
 </html>
