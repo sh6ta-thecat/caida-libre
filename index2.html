@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Protección + Simulador</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    #protector {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%;
+        height: 100%;
+        background: black;
+        color: white;
+        text-align: center;
+        padding-top: 50px;
+        z-index: 99999;
+    }
+
+    #protector h1 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    iframe {
+        border: none;
+        width: 80%;
+        height: 400px;
+        pointer-events: none;
+    }
+
+    #realPage {
+        display: none;
+    }
+</style>
+
+</head>
+<body>
+
+<!-- ======================= -->
+<!-- PROTECTOR ANTI-COPIA    -->
+<!-- ======================= -->
+<div id="protector">
+    <h1>Página hecha por sh6ta_thecat</h1>
+    <p>Este código ha sido copiado desde una ubicación no autorizada.</p>
+    <br>
+
+    <iframe id="ytplayer"
+        src="https://www.youtube.com/embed/5ui8UM_0aeo?controls=0&start=96&autoplay=1&mute=1&enablejsapi=1&modestbranding=1&rel=0"
+        allow="autoplay"
+        allowfullscreen>
+    </iframe>
+
+    <p style="margin-top:20px; font-size: 1.2rem;">Cargando…</p>
+</div>
+
+<!-- ======================= -->
+<!-- PÁGINA REAL COMBINADA   -->
+<!-- ======================= -->
+<div id="realPage">
+
+<embed src="https://sh6ta-thecat.github.io/caida-libre/d.html"
+       style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none;">
+
+</div>
+
+<!-- ======================= -->
+<!-- SCRIPT DEL PROTECTOR    -->
+<!-- ======================= -->
+<script>
+(function() {
+    const host = window.location.hostname;
+    const path = window.location.pathname;
+
+    const esLocalhost =
+        (host === "localhost" || host === "127.0.0.1") &&
+        (path === "/gato" || path === "/gato/");
+
+    if (esLocalhost) {
+        document.getElementById("realPage").style.display = "block";
+    } else {
+        document.getElementById("protector").style.display = "block";
+    }
+})();
+</script>
+
+<script>
+window.addEventListener("load", () => {
+    const iframe = document.getElementById("ytplayer");
+
+    setTimeout(() => {
+        iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "unMute", args: [] }),
+            "*"
+        );
+    }, 800);
+
+    const playFix = setInterval(() => {
+        iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+            "*"
+        );
+    }, 500);
+
+    setTimeout(() => {
+        iframe.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "stopVideo", args: [] }),
+            "*"
+        );
+
+        iframe.remove();
+        clearInterval(playFix);
+
+        document.getElementById("protector").style.display = "none";
+        document.getElementById("realPage").style.display = "block";
+
+    }, 40000);
+});
+</script>
+
+</body>
+</html>
